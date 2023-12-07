@@ -2302,7 +2302,7 @@ def main() -> None:
             ACTION_SELECT: [CallbackQueryHandler(handle_selectaction, pattern = pattern_action)],
         },
         fallbacks=[CommandHandler("menu", menu_button)],
-        per_message=True,
+        # per_message=True,
     )
     dp.add_handler(conv_handler_menu)
 
