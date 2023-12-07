@@ -266,7 +266,7 @@ def command_updateenv(update: Update, context: CallbackContext) -> int:
 
 
 # Function to start the conversation
-async def menu_button(update: Update, context: ContextTypes) -> int:
+def menu_button(update: Update, context: CallbackContext) -> int:
     # Send the menu with options
     reply_markup = InlineKeyboardMarkup(
         [
@@ -289,11 +289,11 @@ async def menu_button(update: Update, context: ContextTypes) -> int:
 
 
 # Function to handle user's choice
-async def select_option(update: Update, context: CallbackContext) -> int:
+def select_option(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     #await query.answer()
     data = query.data
-    await query.edit_message_text(text=f"Selected option: {data}")
+    query.edit_message_text(text=f"Selected option: {data}")
 
     # text = update.message.text
     # update.effective_message.reply_text(text)
