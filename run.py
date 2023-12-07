@@ -17,8 +17,8 @@ except ImportError:
 
 from metaapi_cloud_sdk import MetaApi
 from prettytable import PrettyTable
-from telegram import ParseMode, Update
-from telegram.ext import CommandHandler, Filters, MessageHandler, Updater, ConversationHandler, CallbackContext, CallbackQueryHandler, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CommandHandler, Filters, MessageHandler, Updater, ConversationHandler, CallbackContext, CallbackQueryHandler
 from datetime import datetime
 
 
