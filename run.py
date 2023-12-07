@@ -2296,12 +2296,12 @@ def main() -> None:
         entry_points=[CommandHandler("menu", menu_button)],
         states={
             SELECT_OPTION: [
-                CallbackQueryHandler(select_option, pattern = pattern_text),
+                CallbackQueryHandler(select_option, pattern = pattern_text)
             ],
-            WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
-            ACTION_SELECT: [handle_selectaction],
+            ACTION_SELECT: [ CallbackQueryHandler(select_option, pattern = pattern_text),],
+            WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)]           
         },
-        fallbacks=[CommandHandler("menu", menu_button)],
+        fallbacks=[],
         # per_message=True,
     )
     dp.add_handler(conv_handler_menu)
