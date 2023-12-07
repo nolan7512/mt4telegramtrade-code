@@ -1659,7 +1659,7 @@ def main() -> None:
     conv_handler_menu = ConversationHandler(
         entry_points=[CommandHandler("menu", menu_button)],
         states={
-            SELECT_OPTION: [CallbackQueryHandler(select_option)],
+            SELECT_OPTION: [CallbackQueryHandler(select_option, per_message=True)],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
         fallbacks=[],
