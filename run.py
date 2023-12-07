@@ -58,7 +58,7 @@ SELECT_OPTION, WAIT_FOR_ID, INPUT_TEXT, ACTION_SELECT = range(4)
 (
     TRAILING_STOP,
     CLOSE_POSITION,
-    SELECT_CLOSEPART,
+    CLOSEPART,
     ACCOUNT_INFO,
     OPENING_POSITION,
     PENDING_ORDER,
@@ -346,7 +346,7 @@ def select_option(update: Update, context: CallbackContext) -> int:
     elif data == SELECT_ORDER:
         selected_data["option"] = PENDING_ORDER
         return ACTION_SELECT
-    return WAIT_FOR_ID
+    return ACTION_SELECT
 
 
 
@@ -757,7 +757,7 @@ async def close_position(update: Update, args) -> None:
         update.effective_message.reply_text("Please provide a list of position IDs.")
         return
     # Lấy chuỗi từ args
-    command_str = args[0]
+    command_str = args
     # Tách chuỗi thành danh sách các ID, tách bởi dấu phẩy
     position_ids = command_str.split(",")
     if not position_ids:
@@ -803,14 +803,14 @@ async def close_position(update: Update, args) -> None:
 
 async def close_position_partially(update: Update, args) -> None:
     # Get the string of position IDs and sizes from the command arguments
-    if not args or "|" not in args[0]:
+    if not args or "|" not in args:
         update.effective_message.reply_text(
             "Please provide a list of position IDs and sizes separated by '|'."
         )
         return
 
     # Split the arguments into position IDs and sizes
-    position_args = args[0].split("|")
+    position_args = args.split("|")
     listID = position_args[0].split(",")
     # listID_str = ', '.join(map(str, listID))
     # update.effective_message.reply_text(f"List ID: {listID_str}.")
@@ -959,17 +959,17 @@ def handle_open_trades(update: Update, context: CallbackContext):
 
 def handle_trailingstop(update: Update, context: CallbackContext):
     args = update.effective_message.text.split(" ")[1:]
-    asyncio.run(trailing_stop(update, args))
+    asyncio.run(trailing_stop(update, args[0]))
 
 
 def handle_closeposition(update: Update, context: CallbackContext):
     args = update.effective_message.text.split(" ")[1:]
-    asyncio.run(close_position(update, args))
+    asyncio.run(close_position(update, args[0]))
 
 
 def handle_close_position_part(update: Update, context: CallbackContext):
     args = update.effective_message.text.split(" ")[1:]
-    asyncio.run(close_position_partially(update, args))
+    asyncio.run(close_position_partially(update, args[0]))
 
 
 # def find_entry_point(trade: str, signal: list[str], signaltype : str) -> float:
@@ -2288,7 +2288,7 @@ def main() -> None:
     """dp.add_handler(conv_handler)"""
 
     pattern_text = rf"^{SELECT_INFO}$|^{SELECT_POSITION}$|^{SELECT_ORDER}$|^{SELECT_TRAILING}$|^{SELECT_CLOSEFULL}$|^{SELECT_CLOSEPART}$"
-    pattern_action = rf"^{ACCOUNT_INFO}$|^{OPENING_POSITION}$|^{PENDING_ORDER}$|^{TRAILING_STOP}$|^{CLOSE_POSITION}$|^{SELECT_CLOSEPART}$"
+    pattern_action = rf"^{ACCOUNT_INFO}$|^{OPENING_POSITION}$|^{PENDING_ORDER}$|^{TRAILING_STOP}$|^{CLOSE_POSITION}$|^{CLOSEPART}$"
 
 
     # Create the ConversationHandler
@@ -2299,7 +2299,7 @@ def main() -> None:
                 CallbackQueryHandler(select_option, pattern = pattern_text),
             ],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
-            ACTION_SELECT: [CallbackQueryHandler(handle_selectaction, pattern = pattern_action)],
+            ACTION_SELECT: [handle_selectaction],
         },
         fallbacks=[CommandHandler("menu", menu_button)],
         # per_message=True,
