@@ -23,7 +23,7 @@ from datetime import datetime
 
 
 config = configparser.ConfigParser()
-config.read("/etc/secrets/secret_telegrammt4.env")
+config.read("/etc/secrets/secret_telegramtomt4.env")
 
 # Define states for the conversation
 SELECT_OPTION, WAIT_FOR_ID,INPUT_TEXT = range(3)
@@ -38,28 +38,29 @@ selected_data = {"option": None, "ids": []}
 
 
 # MetaAPI Credentials
-api_key = config["MetaAPI"]["API_KEY"]
-account_id = config["MetaAPI"]["ACCOUNT_ID"]
+API_KEY = config["MetaAPI"]["API_KEY"]
+ACCOUNT_ID = config["MetaAPI"]["ACCOUNT_ID"]
+# Risk factor
+RISK_FACTOR = float(config["MetaAPI"]["RISK_FACTOR"])
+RISK_PERTRADE = float(config["MetaAPI"]["RISK_PERTRADE"])
 
 # Telegram Credentials
-token = config["Telegram"]["TOKEN"]
-telegram_user = config["Telegram"]["TELEGRAM_USER"].split(",")
-authorized_users = telegram_user
-channel_user = config["Telegram"]["CHANNEL_USER"]
+TOKEN = config["Telegram"]["TOKEN"]
+TELEGRAM_USER = config["Telegram"]["TELEGRAM_USER"].split(",")
+AUTHORIZED_USERS = TELEGRAM_USER
+CHANNEL_USER = config["Telegram"]["CHANNEL_USER"]
 
 # Heroku Credentials
-app_url = config["Render"]["APP_URL"]
+APP_URL = config["Render"]["APP_URL"]
 
 # Port number for Telegram bot web hook
-port = int(config["Render"].get("PORT", "8443"))
+PORT = int(config["Render"].get("PORT", "8443"))
 
-plan = config["Render"].get("PLAN", "A")
+PLAN = config["Render"].get("PLAN", "A")
 
-trailing_stop = config["Render"].get("TRAILING_STOP", "Y")
+TRAILINGSTOP = config["Render"].get("TRAILING_STOP", "Y")
 
-# Risk factor
-risk_factor = float(config["Risk"]["RISK_FACTOR"])
-risk_per_trade = float(config["Risk"]["RISK_PERTRADE"])
+
 
 
 
@@ -104,7 +105,7 @@ CALCULATE, TRADE, DECISION, ERROR = range(4)
 SYMBOLS = ['AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDUSD', 'CADCHF', 'CADJPY', 'CHFJPY', 'EURAUD', 'EURCAD', 'EURCHF', 'EURGBP', 'EURJPY', 'EURNZD', 'EURUSD', 'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPJPY', 'GBPNZD', 'GBPUSD', 'NZDCAD', 'NZDCHF', 'NZDJPY', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'XAGUSD', 'XAUUSD', 'GOLD', 'AUS200', 'DE30', 'FR40', 'HK50', 'IN50', 'JP225', 'STOXX50', 'UK100', 'US30', 'US500', 'USTECH', 'USTEC', 'NAS100']
 SYMBOLSPLUS = ['AUD/CAD', 'AUD/CHF', 'AUD/JPY', 'AUD/NZD', 'AUD/USD', 'CAD/CHF', 'CAD/JPY', 'CHF/JPY', 'EUR/AUD', 'EUR/CAD', 'EUR/CHF', 'EUR/GBP', 'EUR/JPY', 'EUR/NZD', 'EUR/USD', 'GBP/AUD', 'GBP/CAD', 'GBP/CHF', 'GBP/JPY', 'GBP/NZD', 'GBP/USD', 'NZD/CAD', 'NZD/CHF', 'NZD/JPY', 'NZD/USD', 'USD/CAD', 'USD/CHF', 'USD/JPY', 'XAG/USD', 'XAU/USD','GOLD']
 TYPETRADE = ['BUY','BUY LIMIT','BUY NOW','SELL','SELL LIMIT','SELL NOW']
-OTHER = ['@','Entry','TP','SL','STOP LOSS','TAKE PROFIT','TARGET PROFIT','BUY','BUY LIMIT','BUY NOW','SELL','SELL LIMIT','SELL NOW']
+OTHER = ['@','Entry','TP','SL','STOP LOSS','TAKE PROFIT','TARGET PROFIT','BUY','BUY LIMIT','BUY NOW','SELL','SELL LIMIT','SELL NOW', 'ORDER']
 
 def update_env(text):
   """Cập nhật các biến môi trường từ text.
@@ -166,7 +167,7 @@ def menu_button(update: Update, context: CallbackContext) -> int:
             [InlineKeyboardButton("Close Part Position", callback_data=SELECT_CLOSEPART)]
         ]
     )
-    update.message.reply_text("Please choose an option:", reply_markup=reply_markup)
+    update.effective_message.reply_text("Please choose an option:", reply_markup=reply_markup)
     return SELECT_OPTION
 # Function to handle user's choice
 def select_option(update: Update, context: CallbackContext) -> int:
@@ -177,17 +178,17 @@ def select_option(update: Update, context: CallbackContext) -> int:
     if data == SELECT_TRAILING:
         selected_data["option"] = "trailing_stop"
         # Ask for IDs
-        update.message.reply_text("Please send the position ID(s) separated by commas.")        
+        update.effective_message.reply_text("Please send the position ID(s) separated by commas.")        
         return WAIT_FOR_ID
     elif data == SELECT_CLOSEFULL:
         selected_data["option"] = "close_position"
         # Ask for IDs
-        update.message.reply_text("Please send the position ID(s) separated by commas.")
+        update.effective_message.reply_text("Please send the position ID(s) separated by commas.")
         return WAIT_FOR_ID
     elif data == SELECT_CLOSEPART:
         selected_data["option"] = "select_closepart"
         # Ask for IDs
-        update.message.reply_text("Please send the position ID(s) separated by commas.")
+        update.effective_message.reply_text("Please send the position ID(s) separated by commas.")
         return WAIT_FOR_ID
     elif data == SELECT_INFO:
         selected_data["option"] = "account_info"
@@ -203,7 +204,7 @@ def select_option(update: Update, context: CallbackContext) -> int:
 # Function to handle IDs and perform actions
 def handle_ids(update: Update, context: CallbackContext) -> None:
     # Extract IDs from the message
-    ids = update.message.text.split(",")
+    ids = update.effective_message.text
     # Store IDs in selected_data
     selected_data["ids"] = ids
 
@@ -220,10 +221,10 @@ def handle_ids(update: Update, context: CallbackContext) -> None:
         asyncio.run(close_position_partially(update, ids))
     elif option == "account_info":
         # Call your function to handle account info
-        asyncio.run(account_info(update, ids))
+        asyncio.run(account_info(update))
     elif option == "opening_position":
         # Call your function to handle opening position
-        asyncio.run(open_trades(update, ids))
+        asyncio.run(open_trades(update, context))
     elif option == "pending_order":
         # Call your function to handle pending order
         asyncio.run(pending_orders(update, ids))
@@ -482,7 +483,10 @@ async def open_trades(update: Update, context: CallbackContext) -> None:
         countrow = 0
         open_trades_data = await get_open_trades(update)
         table = create_table(open_trades_data, is_pending=False)
-        countrow = len(table._rows)
+        if len(table._rows) == 1:
+            countrow == 0
+        else: 
+            countrow = len(table._rows)
         update.effective_message.reply_text(f"Total Positions: {countrow}")
         batch_size = 30
         # In các phần
@@ -935,6 +939,7 @@ def GetTradeInformation(update: Update, trade: dict, balance: float) -> None:
         balance: current balance of the MetaTrader account
     """
     try:
+        default_multiplier = 0.0001
         # calculates the stop loss in pips
         if(trade['Symbol'] == 'XAUUSD'):
             multiplier = 0.1
@@ -944,7 +949,8 @@ def GetTradeInformation(update: Update, trade: dict, balance: float) -> None:
 
         elif(str(trade['Entry']).index('.') >= 2):
             multiplier = 0.01
-
+        elif trade['Symbol'] in ['US30','US500', 'USTEC', 'NAS100']:
+             multiplier = 0.1
         else:
             multiplier = 0.0001
 
@@ -1191,7 +1197,8 @@ async def ConnectMetaTrader(update: Update, trade: dict, enterTrade: bool):
                                                 }
 
                         threshold_TP1 = (trade['Entry'] + ((trade['TP'][0] - trade['Entry']) * 0.8))
-                        decimal_places_entry = len(str(price['bid']).split('.')[-1]) if '.' in str(price['bid']) else 0
+                        # decimal_places_entry = len(str(price['bid']).split('.')[-1]) if '.' in str(price['bid']) else 0
+                        decimal_places_entry = 4
                         if decimal_places_entry == 0:
                             threshold_TP1 = round(threshold_TP1)
                         else:
@@ -1285,11 +1292,12 @@ async def ConnectMetaTrader(update: Update, trade: dict, enterTrade: bool):
                                                     }
 
                             threshold_TP1 = (trade['Entry'] + ((trade['TP'][0] - trade['Entry']) * 0.8))
-                            decimal_places_entry = len(str(price['bid']).split('.')[-1]) if '.' in str(price['bid']) else 0
+                            # decimal_places_entry = len(str(price['bid']).split('.')[-1]) if '.' in str(price['bid']) else 0
+                            decimal_places_entry = 4 
                             if decimal_places_entry == 0:
-                                threshold_TP1 = round(threshold_TP1)
+                                threshold_TP1 = round(threshold_TP1,4)
                             else:
-                                threshold_TP1 = round(threshold_TP1, decimal_places_entry)
+                                threshold_TP1 = round(threshold_TP1,decimal_places_entry)
                             trailing_stop_TP1 =  {
                                 "trailingStopLoss": {
                                     "threshold": {
@@ -1369,11 +1377,11 @@ async def ConnectMetaTrader(update: Update, trade: dict, enterTrade: bool):
                      logger.info(f"\nTrade with ERR_NO_ERROR : {errors}\n")
                 else:
                     logger.info(f"\nTrade failed with error: {errors}\n")
-                    update.effective_message.reply_text(f"There was an issue 😕\n\nError Message:\n{errors}")
+                    update.effective_message.reply_text(f"There was an issue ConnectMetaTrader-00😕\n\nError Message:\n{errors}")
     
     except Exception as error:
         logger.error(f'Error Trade: {error}')
-        update.effective_message.reply_text(f"There was an issue with the connection 😕\n\nError Message:\n{error}")
+        update.effective_message.reply_text(f"There was an issue ConnectMetaTrader 😕\n\nError Message:\n{error}")
     
     return
 
@@ -1648,7 +1656,7 @@ def main() -> None:
 
 
     # Create the ConversationHandler
-    conv_handler = ConversationHandler(
+    conv_handler_menu = ConversationHandler(
         entry_points=[CommandHandler("menu", menu_button)],
         states={
             SELECT_OPTION: [CallbackQueryHandler(select_option)],
@@ -1656,8 +1664,9 @@ def main() -> None:
         },
         fallbacks=[],
     )
+    dp.add_handler(conv_handler_menu)
 
-    conv_handler = ConversationHandler(
+    conv_handler_env = ConversationHandler(
     entry_points=[CommandHandler("updateenv", command_updateenv)],
     states={
         INPUT_TEXT: [MessageHandler(Filters.text & ~Filters.command, update_env)],
