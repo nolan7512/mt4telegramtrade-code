@@ -266,7 +266,7 @@ def command_updateenv(update: Update, context: CallbackContext) -> int:
 
 
 # Function to start the conversation
-async def menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def menu_button(update: Update, context: ContextTypes) -> int:
     # Send the menu with options
     reply_markup = InlineKeyboardMarkup(
         [
