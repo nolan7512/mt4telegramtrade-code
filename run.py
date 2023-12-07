@@ -25,6 +25,8 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
     CallbackQueryHandler,
+    ContextTypes,
+    Application,
 )
 from datetime import datetime
 
@@ -264,7 +266,7 @@ def command_updateenv(update: Update, context: CallbackContext) -> int:
 
 
 # Function to start the conversation
-def menu_button(update: Update, context: CallbackContext) -> int:
+async def menu_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     # Send the menu with options
     reply_markup = InlineKeyboardMarkup(
         [
@@ -287,42 +289,44 @@ def menu_button(update: Update, context: CallbackContext) -> int:
 
 
 # Function to handle user's choice
-def select_option(update: Update, context: CallbackContext) -> int:
+async def select_option(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
+    #await query.answer()
     data = query.data
-    update.effective_message.reply_text("select_option")
-    update.effective_message.reply_text(data)
-    text = update.message.text
-    update.effective_message.reply_text(text)
+    await query.edit_message_text(text=f"Selected option: {data}")
+
+    # text = update.message.text
+    # update.effective_message.reply_text(text)
+
     # Update selected_data based on user's choice
-    if text == SELECT_TRAILING:
+    if data == SELECT_TRAILING:
         selected_data["option"] = "trailing_stop"
         # Ask for IDs
         update.effective_message.reply_text(
             "Please send the position ID(s) separated by commas."
         )
         return WAIT_FOR_ID
-    elif text == SELECT_CLOSEFULL:
+    elif data == SELECT_CLOSEFULL:
         selected_data["option"] = "close_position"
         # Ask for IDs
         update.effective_message.reply_text(
             "Please send the position ID(s) separated by commas."
         )
         return WAIT_FOR_ID
-    elif text == SELECT_CLOSEPART:
+    elif data == SELECT_CLOSEPART:
         selected_data["option"] = "select_closepart"
         # Ask for IDs
         update.effective_message.reply_text(
             "Please send the position ID(s) separated by commas."
         )
         return WAIT_FOR_ID
-    elif text == SELECT_INFO:
+    elif data == SELECT_INFO:
         selected_data["option"] = "account_info"
         return WAIT_FOR_ID
-    elif text == SELECT_POSITION:
+    elif data == SELECT_POSITION:
         selected_data["option"] = "opening_position"
         return WAIT_FOR_ID
-    elif text == SELECT_ORDER:
+    elif data == SELECT_ORDER:
         selected_data["option"] = "pending_order"
         return WAIT_FOR_ID
     return WAIT_FOR_ID
@@ -331,12 +335,14 @@ def select_option(update: Update, context: CallbackContext) -> int:
 # Function to handle IDs and perform actions
 def handle_ids(update: Update, context: CallbackContext) -> None:
     # Extract IDs from the message
-    ids = update.effective_message.text
+    ids = update.message.text
+    update.effective_message.reply_text(f" ids : " + ids)
     # Store IDs in selected_data
     selected_data["ids"] = ids
 
     # Perform actions based on user's choice
     option = selected_data["option"]
+    update.effective_message.reply_text(f" handle_ids option : " + option)
     if option == "trailing_stop":
         # Call your function to handle trailing stop
         asyncio.run(trailing_stop(update, ids))
@@ -2252,35 +2258,18 @@ def main() -> None:
     # conversation handler for entering trade or calculating trade information
     """dp.add_handler(conv_handler)"""
 
+    pattern = rf"^{SELECT_INFO}$|^{SELECT_POSITION}$|^{SELECT_ORDER}$|^{SELECT_TRAILING}$|^{SELECT_CLOSEFULL}$|^{SELECT_CLOSEPART}$"
+
     # Create the ConversationHandler
     conv_handler_menu = ConversationHandler(
         entry_points=[CommandHandler("menu", menu_button)],
         states={
             SELECT_OPTION: [
-                MessageHandler(
-                    Filters.text
-                    & Filters.regex(
-                        r"^"
-                        + SELECT_INFO
-                        + "$|^"
-                        + SELECT_POSITION
-                        + "$|^"
-                        + SELECT_ORDER
-                        + "$|^"
-                        + SELECT_TRAILING
-                        + "$|^"
-                        + SELECT_CLOSEFULL
-                        + "$|^"
-                        + SELECT_CLOSEPART
-                        + "$"
-                    ),
-                    select_option,
-                )
+                CallbackQueryHandler(select_option, pattern = pattern),
             ],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
-            WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
-        fallbacks=[],
+        fallbacks=[CommandHandler("menu", menu_button)],
     )
     dp.add_handler(conv_handler_menu)
 
