@@ -35,7 +35,7 @@ config = configparser.ConfigParser()
 config.read("/etc/secrets/secret_telegramtomt4.env")
 
 # Define states for the conversation
-SELECT_OPTION, WAIT_FOR_ID, INPUT_TEXT = range(3)
+SELECT_OPTION, WAIT_FOR_ID, INPUT_TEXT, ACTION_SELECT = range(4)
 
 # Callback data
 (
@@ -52,6 +52,23 @@ SELECT_OPTION, WAIT_FOR_ID, INPUT_TEXT = range(3)
     "select_trailing",
     "select_closefull",
     "select_closepart",
+)
+
+
+(
+    TRAILING_STOP,
+    CLOSE_POSITION,
+    SELECT_CLOSEPART,
+    ACCOUNT_INFO,
+    OPENING_POSITION,
+    PENDING_ORDER,
+) = (
+    "trailing_stop", 
+    "close_position", 
+    "select_closepart", 
+    "account_info", 
+    "opening_position", 
+    "pending_order",
 )
 
 # Create a list to store selected option and IDs
@@ -300,36 +317,38 @@ def select_option(update: Update, context: CallbackContext) -> int:
 
     # Update selected_data based on user's choice
     if data == SELECT_TRAILING:
-        selected_data["option"] = "trailing_stop"
+        selected_data["option"] = TRAILING_STOP
         # Ask for IDs
         update.effective_message.reply_text(
             "Please send the position ID(s) separated by commas."
         )
         return WAIT_FOR_ID
     elif data == SELECT_CLOSEFULL:
-        selected_data["option"] = "close_position"
+        selected_data["option"] = CLOSE_POSITION
         # Ask for IDs
         update.effective_message.reply_text(
             "Please send the position ID(s) separated by commas."
         )
         return WAIT_FOR_ID
     elif data == SELECT_CLOSEPART:
-        selected_data["option"] = "select_closepart"
+        selected_data["option"] = SELECT_CLOSEPART
         # Ask for IDs
         update.effective_message.reply_text(
             "Please send the position ID(s) separated by commas."
         )
         return WAIT_FOR_ID
     elif data == SELECT_INFO:
-        selected_data["option"] = "account_info"
-        return WAIT_FOR_ID
+        selected_data["option"] = ACCOUNT_INFO
+        return ACTION_SELECT
     elif data == SELECT_POSITION:
-        selected_data["option"] = "opening_position"
-        return WAIT_FOR_ID
+        selected_data["option"] = OPENING_POSITION
+        return ACTION_SELECT
     elif data == SELECT_ORDER:
-        selected_data["option"] = "pending_order"
-        return WAIT_FOR_ID
+        selected_data["option"] = PENDING_ORDER
+        return ACTION_SELECT
     return WAIT_FOR_ID
+
+
 
 
 # Function to handle IDs and perform actions
@@ -343,24 +362,34 @@ def handle_ids(update: Update, context: CallbackContext) -> None:
     # Perform actions based on user's choice
     option = selected_data["option"]
     update.effective_message.reply_text(f" handle_ids option : " + option)
-    if option == "trailing_stop":
+    if option == TRAILING_STOP:
         # Call your function to handle trailing stop
         asyncio.run(trailing_stop(update, ids))
-    elif option == "close_position":
+    elif option == CLOSE_POSITION:
         # Call your function to handle close position
         asyncio.run(close_position(update, ids))
-    elif option == "select_closepart":
+    elif option == SELECT_CLOSEPART:
         # Call your function to handle close part position
         asyncio.run(close_position_partially(update, ids))
-    elif option == "account_info":
+    # Reset selected_data for future use
+    selected_data.clear()
+
+    return ConversationHandler.END
+
+# Function to handle IDs and perform actions
+def handle_selectaction(update: Update, context: CallbackContext) -> None:
+    # Perform actions based on user's choice
+    option = selected_data["option"]
+    update.effective_message.reply_text(f" Action  : " + option)
+    if option == ACCOUNT_INFO:
         # Call your function to handle account info
-        asyncio.run(account_info(update))
-    elif option == "opening_position":
+        asyncio.run(account_info(update,context))
+    elif option == OPENING_POSITION:
         # Call your function to handle opening position
         asyncio.run(open_trades(update, context))
-    elif option == "pending_order":
+    elif option == PENDING_ORDER:
         # Call your function to handle pending order
-        asyncio.run(pending_orders(update, ids))
+        asyncio.run(pending_orders(update,context))
 
     # Reset selected_data for future use
     selected_data.clear()
@@ -2258,18 +2287,22 @@ def main() -> None:
     # conversation handler for entering trade or calculating trade information
     """dp.add_handler(conv_handler)"""
 
-    pattern = rf"^{SELECT_INFO}$|^{SELECT_POSITION}$|^{SELECT_ORDER}$|^{SELECT_TRAILING}$|^{SELECT_CLOSEFULL}$|^{SELECT_CLOSEPART}$"
+    pattern_text = rf"^{SELECT_INFO}$|^{SELECT_POSITION}$|^{SELECT_ORDER}$|^{SELECT_TRAILING}$|^{SELECT_CLOSEFULL}$|^{SELECT_CLOSEPART}$"
+    pattern_action = rf"^{ACCOUNT_INFO}$|^{OPENING_POSITION}$|^{PENDING_ORDER}$|^{TRAILING_STOP}$|^{CLOSE_POSITION}$|^{SELECT_CLOSEPART}$"
+
 
     # Create the ConversationHandler
     conv_handler_menu = ConversationHandler(
         entry_points=[CommandHandler("menu", menu_button)],
         states={
             SELECT_OPTION: [
-                CallbackQueryHandler(select_option, pattern = pattern),
+                CallbackQueryHandler(select_option, pattern = pattern_text),
             ],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
+            ACTION_SELECT: [CallbackQueryHandler(handle_selectaction, pattern = pattern_action)],
         },
         fallbacks=[CommandHandler("menu", menu_button)],
+        per_message=True,
     )
     dp.add_handler(conv_handler_menu)
 
