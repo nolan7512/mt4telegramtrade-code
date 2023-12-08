@@ -2296,9 +2296,9 @@ def main() -> None:
         entry_points=[CommandHandler("menu", menu_button)],
         states={
             SELECT_OPTION: [
-                CallbackQueryHandler(select_option, pattern = pattern_text)
+                CallbackQueryHandler(select_option, pattern = pattern_text),
             ],
-            ACTION_SELECT: [ CallbackQueryHandler(select_option, pattern = pattern_text),],
+            ACTION_SELECT: [ CallbackQueryHandler(handle_selectaction, pattern = pattern_action),],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)]           
         },
         fallbacks=[],
