@@ -224,23 +224,26 @@ def select_option(update: Update, context: CallbackContext) -> int:
             "OK! Check your account"
         )
         asyncio.run(account_info(update))
-        return ACTION_SELECT
+        selected_data.clear()
+        return ConversationHandler.END
     elif data == SELECT_POSITION:
         selected_data["option"] = OPENING_POSITION
         update.effective_message.reply_text(
             "OK! Check your opening position"
         )
         asyncio.run(open_trades(update, context))
-        return ACTION_SELECT
+        selected_data.clear()
+        return ConversationHandler.END
     elif data == SELECT_ORDER:
         selected_data["option"] = PENDING_ORDER
         update.effective_message.reply_text(
             "OK! Check your pending order"
         )
         asyncio.run(pending_orders(update, context))
-        return ACTION_SELECT
+        selected_data.clear()
+        return ConversationHandler.END
      
-    return ACTION_SELECT
+    return  ConversationHandler.END
 
 
 # Function to handle IDs and perform actions
@@ -2190,7 +2193,6 @@ def main() -> None:
             SELECT_OPTION: [
                 CallbackQueryHandler(select_option, pattern=pattern_text),
             ],
-            ACTION_SELECT: [ConversationHandler.END],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
         fallbacks=[],
