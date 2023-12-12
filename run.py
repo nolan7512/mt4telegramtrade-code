@@ -26,7 +26,6 @@ from telegram.ext import (
     CallbackContext,
     CallbackQueryHandler,
     ContextTypes,
-    
 )
 from datetime import datetime
 
@@ -63,11 +62,11 @@ SELECT_OPTION, WAIT_FOR_ID, INPUT_TEXT, ACTION_SELECT = range(4)
     OPENING_POSITION,
     PENDING_ORDER,
 ) = (
-    "trailing_stop", 
-    "close_position", 
-    "select_closepart", 
-    "account_info", 
-    "opening_position", 
+    "trailing_stop",
+    "close_position",
+    "select_closepart",
+    "account_info",
+    "opening_position",
     "pending_order",
 )
 
@@ -82,47 +81,20 @@ ACCOUNT_ID = config["MetaAPI"]["ACCOUNT_ID"]
 RISK_FACTOR = float(config["MetaAPI"]["RISK_FACTOR"])
 RISK_PERTRADE = float(config["MetaAPI"]["RISK_PERTRADE"])
 
+
 # Telegram Credentials
 TOKEN = config["Telegram"]["TOKEN"]
 TELEGRAM_USER = config["Telegram"]["TELEGRAM_USER"].split(",")
 AUTHORIZED_USERS = TELEGRAM_USER
 CHANNEL_USER = config["Telegram"]["CHANNEL_USER"]
 
-# Heroku Credentials
-APP_URL = config["Render"]["APP_URL"]
 
+# Render Credentials
+APP_URL = config["Render"]["APP_URL"]
 # Port number for Telegram bot web hook
 PORT = int(config["Render"].get("PORT", "8443"))
-
 PLAN = config["Render"].get("PLAN", "A")
-
 TRAILINGSTOP = config["Render"].get("TRAILING_STOP", "Y")
-
-
-# # MetaAPI Credentials
-# API_KEY = os.environ.get("API_KEY")
-# ACCOUNT_ID = os.environ.get("ACCOUNT_ID")
-
-# # Telegram Credentials
-# TOKEN = os.environ.get("TOKEN")
-# TELEGRAM_USER = os.environ.get("TELEGRAM_USER", "")  # Đọc biến môi trường TELEGRAM_USERS, mặc định là chuỗi trống
-# AUTHORIZED_USERS = TELEGRAM_USER.split(",")  # Chia chuỗi thành danh sách, sử dụng dấu phẩy làm dấu phân cách
-# CHANNEL_USER = os.environ.get("CHANNEL_USER")
-
-# # Heroku Credentials
-# APP_URL = os.environ.get("APP_URL")
-
-# # Port number for Telegram bot web hook
-# PORT = int(os.environ.get('PORT', '8443'))
-
-# PLAN = os.environ.get('PLAN','A')
-
-# TRAILINGSTOP = os.environ.get('TRAILING_STOP','Y')
-
-# # RISK FACTOR
-# RISK_FACTOR = float(os.environ.get("RISK_FACTOR"))
-# RISK_PERTRADE = float(os.environ.get("RISK_PERTRADE"))
-
 
 # Enables logging
 logging.basicConfig(
@@ -134,102 +106,11 @@ logger = logging.getLogger(__name__)
 CALCULATE, TRADE, DECISION, ERROR = range(4)
 
 # allowed FX symbols
-SYMBOLS = [
-    "AUDCAD",
-    "AUDCHF",
-    "AUDJPY",
-    "AUDNZD",
-    "AUDUSD",
-    "CADCHF",
-    "CADJPY",
-    "CHFJPY",
-    "EURAUD",
-    "EURCAD",
-    "EURCHF",
-    "EURGBP",
-    "EURJPY",
-    "EURNZD",
-    "EURUSD",
-    "GBPAUD",
-    "GBPCAD",
-    "GBPCHF",
-    "GBPJPY",
-    "GBPNZD",
-    "GBPUSD",
-    "NZDCAD",
-    "NZDCHF",
-    "NZDJPY",
-    "NZDUSD",
-    "USDCAD",
-    "USDCHF",
-    "USDJPY",
-    "XAGUSD",
-    "XAUUSD",
-    "GOLD",
-    "AUS200",
-    "DE30",
-    "FR40",
-    "HK50",
-    "IN50",
-    "JP225",
-    "STOXX50",
-    "UK100",
-    "US30",
-    "US500",
-    "USTECH",
-    "USTEC",
-    "NAS100",
-]
-SYMBOLSPLUS = [
-    "AUD/CAD",
-    "AUD/CHF",
-    "AUD/JPY",
-    "AUD/NZD",
-    "AUD/USD",
-    "CAD/CHF",
-    "CAD/JPY",
-    "CHF/JPY",
-    "EUR/AUD",
-    "EUR/CAD",
-    "EUR/CHF",
-    "EUR/GBP",
-    "EUR/JPY",
-    "EUR/NZD",
-    "EUR/USD",
-    "GBP/AUD",
-    "GBP/CAD",
-    "GBP/CHF",
-    "GBP/JPY",
-    "GBP/NZD",
-    "GBP/USD",
-    "NZD/CAD",
-    "NZD/CHF",
-    "NZD/JPY",
-    "NZD/USD",
-    "USD/CAD",
-    "USD/CHF",
-    "USD/JPY",
-    "XAG/USD",
-    "XAU/USD",
-    "GOLD",
-]
-TYPETRADE = ["BUY", "BUY LIMIT", "BUY NOW", "SELL", "SELL LIMIT", "SELL NOW"]
-OTHER = [
-    "@",
-    "Entry",
-    "TP",
-    "SL",
-    "STOP LOSS",
-    "TAKE PROFIT",
-    "TARGET PROFIT",
-    "BUY",
-    "BUY LIMIT",
-    "BUY NOW",
-    "SELL",
-    "SELL LIMIT",
-    "SELL NOW",
-    "ORDER",
-]
+# Đọc các biến từ file .env và chuyển thành danh sách
+SYMBOLS = config["Bot"].get("SYMBOLS").split(",")
+SYMBOLSPLUS = config["Bot"].get("SYMBOLSPLUS").split(",")
+TYPETRADE = config["Bot"].get("TYPETRADE").split(",")
+OTHER = config["Bot"].get("OTHER").split(",")
 
 
 def update_env(text):
@@ -308,7 +189,7 @@ def menu_button(update: Update, context: CallbackContext) -> int:
 # Function to handle user's choice
 def select_option(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
-    #await query.answer()
+    # await query.answer()
     data = query.data
     query.edit_message_text(text=f"Selected option: {data}")
 
@@ -349,8 +230,6 @@ def select_option(update: Update, context: CallbackContext) -> int:
     return ACTION_SELECT
 
 
-
-
 # Function to handle IDs and perform actions
 def handle_ids(update: Update, context: CallbackContext) -> None:
     # Extract IDs from the message
@@ -376,6 +255,7 @@ def handle_ids(update: Update, context: CallbackContext) -> None:
 
     return ConversationHandler.END
 
+
 # Function to handle IDs and perform actions
 def handle_selectaction(update: Update, context: CallbackContext) -> None:
     # Perform actions based on user's choice
@@ -383,13 +263,13 @@ def handle_selectaction(update: Update, context: CallbackContext) -> None:
     update.effective_message.reply_text(f" Action  : " + option)
     if option == ACCOUNT_INFO:
         # Call your function to handle account info
-        asyncio.run(account_info(update,context))
+        asyncio.run(account_info(update))
     elif option == OPENING_POSITION:
         # Call your function to handle opening position
         asyncio.run(open_trades(update, context))
     elif option == PENDING_ORDER:
         # Call your function to handle pending order
-        asyncio.run(pending_orders(update,context))
+        asyncio.run(pending_orders(update, context))
 
     # Reset selected_data for future use
     selected_data.clear()
@@ -917,9 +797,14 @@ async def account_info(update: Update) -> None:
             table.add_row([field_name_vietnamese, field_value])
         # Gửi bảng dưới dạng tin nhắn HTML
         temp_table = f"<pre>{table}</pre>"
-        update.effective_message.reply_text(
+        if selected_data["option"] == ACCOUNT_INFO:
+            update.edit_message_text(
+                f"<pre>{temp_table}</pre>", parse_mode=ParseMode.HTML
+            )
+        else:
+            update.effective_message.reply_text(
             f"<pre>{temp_table}</pre>", parse_mode=ParseMode.HTML
-        )
+            )
     except Exception as e:
         update.effective_message.reply_text(f"Error get Account Infomation: {str(e)}.")
 
@@ -2290,16 +2175,17 @@ def main() -> None:
     pattern_text = rf"^{SELECT_INFO}$|^{SELECT_POSITION}$|^{SELECT_ORDER}$|^{SELECT_TRAILING}$|^{SELECT_CLOSEFULL}$|^{SELECT_CLOSEPART}$"
     pattern_action = rf"^{ACCOUNT_INFO}$|^{OPENING_POSITION}$|^{PENDING_ORDER}$|^{TRAILING_STOP}$|^{CLOSE_POSITION}$|^{CLOSEPART}$"
 
-
     # Create the ConversationHandler
     conv_handler_menu = ConversationHandler(
         entry_points=[CommandHandler("menu", menu_button)],
         states={
             SELECT_OPTION: [
-                CallbackQueryHandler(select_option, pattern = pattern_text),
+                CallbackQueryHandler(select_option, pattern=pattern_text),
             ],
-            ACTION_SELECT: [ CallbackQueryHandler(handle_selectaction, pattern = pattern_action),],
-            WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)]           
+            ACTION_SELECT: [
+                CallbackQueryHandler(handle_selectaction, pattern=pattern_action),
+            ],
+            WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
         fallbacks=[],
         # per_message=True,
