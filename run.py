@@ -2198,7 +2198,7 @@ def main() -> None:
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
         fallbacks=[],
-        per_message=True,
+        # per_message=True,
     )
     dp.add_handler(conv_handler_menu)
 
