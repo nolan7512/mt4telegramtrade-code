@@ -220,12 +220,21 @@ def select_option(update: Update, context: CallbackContext) -> int:
         return WAIT_FOR_ID
     elif data == SELECT_INFO:
         selected_data["option"] = ACCOUNT_INFO
+        update.effective_message.reply_text(
+            "OK! Check your account"
+        )
         return ACTION_SELECT
     elif data == SELECT_POSITION:
         selected_data["option"] = OPENING_POSITION
+        update.effective_message.reply_text(
+            "OK! Check your opening position"
+        )
         return ACTION_SELECT
     elif data == SELECT_ORDER:
         selected_data["option"] = PENDING_ORDER
+        update.effective_message.reply_text(
+            "OK! Check your pending order"
+        )
         return ACTION_SELECT
     return ACTION_SELECT
 
@@ -260,7 +269,8 @@ def handle_ids(update: Update, context: CallbackContext) -> None:
 def handle_selectaction(update: Update, context: CallbackContext) -> None:
     # Perform actions based on user's choice
     option = selected_data["option"]
-    update.effective_message.reply_text(f" Action  : " + option)
+    logger.info(f"--------------------------handle_selectaction-------------------------------:  {option}")
+    update.effective_message.reply_text(f" Action  : {option} ")
     if option == ACCOUNT_INFO:
         # Call your function to handle account info
         asyncio.run(account_info(update))
@@ -2188,7 +2198,7 @@ def main() -> None:
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
         fallbacks=[],
-        # per_message=True,
+        per_message=True,
     )
     dp.add_handler(conv_handler_menu)
 
