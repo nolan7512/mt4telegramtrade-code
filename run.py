@@ -2183,7 +2183,7 @@ def main() -> None:
                 CallbackQueryHandler(select_option, pattern=pattern_text),
             ],
             ACTION_SELECT: [
-                CallbackQueryHandler(handle_selectaction, pattern=pattern_action),
+                handle_selectaction,
             ],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
