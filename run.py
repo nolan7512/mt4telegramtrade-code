@@ -223,19 +223,23 @@ def select_option(update: Update, context: CallbackContext) -> int:
         update.effective_message.reply_text(
             "OK! Check your account"
         )
+        asyncio.run(account_info(update))
         return ACTION_SELECT
     elif data == SELECT_POSITION:
         selected_data["option"] = OPENING_POSITION
         update.effective_message.reply_text(
             "OK! Check your opening position"
         )
+        asyncio.run(open_trades(update, context))
         return ACTION_SELECT
     elif data == SELECT_ORDER:
         selected_data["option"] = PENDING_ORDER
         update.effective_message.reply_text(
             "OK! Check your pending order"
         )
+        asyncio.run(pending_orders(update, context))
         return ACTION_SELECT
+     
     return ACTION_SELECT
 
 
@@ -807,12 +811,7 @@ async def account_info(update: Update) -> None:
             table.add_row([field_name_vietnamese, field_value])
         # Gửi bảng dưới dạng tin nhắn HTML
         temp_table = f"<pre>{table}</pre>"
-        if selected_data["option"] == ACCOUNT_INFO:
-            update.edit_message_text(
-                f"<pre>{temp_table}</pre>", parse_mode=ParseMode.HTML
-            )
-        else:
-            update.effective_message.reply_text(
+        update.effective_message.reply_text(
             f"<pre>{temp_table}</pre>", parse_mode=ParseMode.HTML
             )
     except Exception as e:
@@ -2059,7 +2058,6 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
     return ConversationHandler.END
 
-
 def error(update: Update, context: CallbackContext) -> None:
     """Logs Errors caused by updates.
 
@@ -2192,9 +2190,7 @@ def main() -> None:
             SELECT_OPTION: [
                 CallbackQueryHandler(select_option, pattern=pattern_text),
             ],
-            ACTION_SELECT: [
-                MessageHandler(Filters.text & ~Filters.command, handle_selectaction),
-            ],
+            ACTION_SELECT: [ConversationHandler.END],
             WAIT_FOR_ID: [MessageHandler(Filters.text & ~Filters.command, handle_ids)],
         },
         fallbacks=[],
